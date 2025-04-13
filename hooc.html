@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>عارض ملفات HTML</title>
+    <style>
+        :root {
+            --primary-color: #0071e3;
+            --background-color: #f5f5f7;
+            --text-color: #1d1d1f;
+            --secondary-text: #86868b;
+            --border-color: #e5e5e7;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+            transition: all 0.3s ease;
+        }
+        
+        .header-title {
+            font-size: 18px;
+            flex: 1;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .header-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            padding: 5px 10px;
+            display: none;
+            cursor: pointer;
+        }
+        
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            overflow: hidden;
+            margin-top: 50px;
+        }
+        
+        .file-selector {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            transition: all 0.3s ease;
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        .viewer {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        
+        .no-file {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            color: var(--secondary-text);
+            font-size: 16px;
+            text-align: center;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .no-file small {
+            font-size: 14px;
+            color: #a1a1a6;
+            margin-top: 10px;
+        }
+        
+        .tab-bar {
+            display: none;
+            justify-content: center;
+            background-color: var(--background-color);
+            border-top: 1px solid var(--border-color);
+            padding: 12px 5px calc(20px + env(safe-area-inset-bottom));
+            flex-wrap: wrap;
+            gap: 6px;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+        
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            padding: 10px 15px;
+            font-size: 15px;
+            border-radius: 20px;
+            min-width: 36px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tab-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 12px;
+            color: var(--secondary-text);
+            background-color: var(--background-color);
+            border-top: 1px solid var(--border-color);
+            display: none;
+        }
+
+        /* تحسينات للأندرويد */
+        @media (hover: none) and (pointer: coarse) {
+            .btn {
+                padding: 14px 28px;
+                font-size: 16px;
+            }
+            
+            .tab-btn {
+                padding: 12px 18px;
+                font-size: 16px;
+                min-width: 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .tab-btn {
+                padding: 8px 14px;
+                font-size: 14px;
+                min-width: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header id="mainHeader">
+        <button class="header-btn" id="backBtn" aria-label="رجوع">← رجوع</button>
+        <div class="header-title" id="headerTitle">عارض ملفات HTML</div>
+        <div style="width: 60px;"></div>
+    </header>
+    
+    <div class="container">
+        <div class="file-selector" id="fileSelector">
+            <button class="btn" id="selectFileBtn">فتح ملف</button>
+            <button class="btn btn-outline" id="selectMultipleBtn">الملزمة</button>
+        </div>
+        
+        <div class="viewer" id="viewer">
+            <div class="no-file">
+                لم يتم اختيار ملف بعد
+                <small>يمكن من زر الملزمة تحميل 10 ملفات HTML دفعة واحدة</small>
+            </div>
+        </div>
+        
+        <div class="tab-bar" id="tabBar">
+            <button class="tab-btn active" data-index="0" aria-label="الملف 1">1</button>
+            <button class="tab-btn" data-index="1" aria-label="الملف 2">2</button>
+            <button class="tab-btn" data-index="2" aria-label="الملف 3">3</button>
+            <button class="tab-btn" data-index="3" aria-label="الملف 4">4</button>
+            <button class="tab-btn" data-index="4" aria-label="الملف 5">5</button>
+            <button class="tab-btn" data-index="5" aria-label="الملف 6">6</button>
+            <button class="tab-btn" data-index="6" aria-label="الملف 7">7</button>
+            <button class="tab-btn" data-index="7" aria-label="الملف 8">8</button>
+            <button class="tab-btn" data-index="8" aria-label="الملف 9">9</button>
+            <button class="tab-btn" data-index="9" aria-label="الملف 10">10</button>
+        </div>
+    </div>
+    
+    <div class="footer" id="mainFooter">
+        &copy; جميع الحقوق محفوظة - مرتضى ضاري
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // عناصر DOM
+            const selectFileBtn = document.getElementById('selectFileBtn');
+            const selectMultipleBtn = document.getElementById('selectMultipleBtn');
+            const backBtn = document.getElementById('backBtn');
+            const viewer = document.getElementById('viewer');
+            const tabBar = document.getElementById('tabBar');
+            const fileSelector = document.getElementById('fileSelector');
+            const headerTitle = document.getElementById('headerTitle');
+            const mainHeader = document.getElementById('mainHeader');
+            const mainFooter = document.getElementById('mainFooter');
+            
+            // حالة التطبيق
+            const state = {
+                files: [],
+                currentTabIndex: 0,
+                isMultiFileMode: false
+            };
+            
+            // تهيئة التطبيق
+            function init() {
+                setupEventListeners();
+                updateUI();
+            }
+            
+            // إعداد مستمعي الأحداث
+            function setupEventListeners() {
+                selectFileBtn.addEventListener('click', handleSingleFileSelect);
+                selectMultipleBtn.addEventListener('click', handleMultiFileSelect);
+                backBtn.addEventListener('click', handleBack);
+                tabBar.addEventListener('click', handleTabSwitch);
+            }
+            
+            // تحديث واجهة المستخدم بناءً على الحالة
+            function updateUI() {
+                if (state.files.length > 0) {
+                    backBtn.style.display = 'block';
+                    fileSelector.style.display = 'none';
+                    mainFooter.style.display = 'none';
+                    
+                    if (state.files.length > 1) {
+                        tabBar.style.display = 'flex';
+                        headerTitle.textContent = `الملزمة (${state.files.length})`;
+                    } else {
+                        tabBar.style.display = 'none';
+                        headerTitle.textContent = 'عرض الملف';
+                    }
+                    
+                    mainHeader.style.height = '44px';
+                    mainHeader.style.padding = '8px 12px';
+                } else {
+                    backBtn.style.display = 'none';
+                    fileSelector.style.display = 'flex';
+                    tabBar.style.display = 'none';
+                    mainFooter.style.display = 'block';
+                    headerTitle.textContent = 'عارض ملفات HTML';
+                    mainHeader.style.height = '50px';
+                    mainHeader.style.padding = '10px 15px';
+                }
+                
+                updateTabs();
+            }
+            
+            // تحديث تبويبات الملفات
+            function updateTabs() {
+                document.querySelectorAll('.tab-btn').forEach((btn, index) => {
+                    if (index < state.files.length) {
+                        btn.textContent = `${index + 1}`;
+                        btn.style.display = 'flex';
+                        btn.classList.toggle('active', index === state.currentTabIndex);
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                });
+            }
+            
+            // عرض الملف الحالي
+            function displayCurrentFile() {
+                if (state.files.length === 0) {
+                    viewer.innerHTML = `
+                        <div class="no-file">
+                            لم يتم اختيار ملف بعد
+                            <small>يمكن من زر الملزمة تحميل 10 ملفات HTML دفعة واحدة</small>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const file = state.files[state.currentTabIndex];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    viewer.innerHTML = '';
+                    const iframe = document.createElement('iframe');
+                    iframe.srcdoc = e.target.result;
+                    viewer.appendChild(iframe);
+                };
+                
+                reader.onerror = function() {
+                    viewer.innerHTML = `
+                        <div class="no-file">
+                            خطأ في قراءة الملف
+                        </div>
+                    `;
+                };
+                
+                reader.readAsText(file);
+            }
+            
+            // معالجة اختيار ملف واحد
+            function handleSingleFileSelect() {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.html,.htm';
+                
+                fileInput.addEventListener('change', function(e) {
+                    if (e.target.files && e.target.files.length > 0) {
+                        const files = Array.from(e.target.files).filter(file => 
+                            file.name.toLowerCase().endsWith('.html') || 
+                            file.name.toLowerCase().endsWith('.htm')
+                        ).slice(0, 1);
+                        
+                        if (files.length > 0) {
+                            state.files = files;
+                            state.currentTabIndex = 0;
+                            state.isMultiFileMode = false;
+                            displayCurrentFile();
+                            updateUI();
+                        }
+                    }
+                });
+                
+                fileInput.click();
+            }
+            
+            // معالجة اختيار ملفات متعددة
+            function handleMultiFileSelect() {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.html,.htm';
+                fileInput.multiple = true;
+                
+                fileInput.addEventListener('change', function(e) {
+                    if (e.target.files && e.target.files.length > 0) {
+                        const files = Array.from(e.target.files)
+                            .filter(file => 
+                                file.name.toLowerCase().endsWith('.html') || 
+                                file.name.toLowerCase().endsWith('.htm')
+                            )
+                            .slice(0, 10);
+                        
+                        if (files.length > 0) {
+                            state.files = files;
+                            state.currentTabIndex = 0;
+                            state.isMultiFileMode = files.length > 1;
+                            displayCurrentFile();
+                            updateUI();
+                        }
+                    }
+                });
+                
+                fileInput.click();
+            }
+            
+            // معالجة زر الرجوع
+            function handleBack() {
+                state.files = [];
+                state.currentTabIndex = 0;
+                state.isMultiFileMode = false;
+                displayCurrentFile();
+                updateUI();
+            }
+            
+            // معالجة التبديل بين التبويبات
+            function handleTabSwitch(e) {
+                const tabBtn = e.target.closest('.tab-btn');
+                if (tabBtn) {
+                    const index = parseInt(tabBtn.getAttribute('data-index'));
+                    if (index < state.files.length) {
+                        state.currentTabIndex = index;
+                        displayCurrentFile();
+                        updateTabs();
+                    }
+                }
+            }
+            
+            // بدء التطبيق
+            init();
+        });
+    </script>
+</body>
+</html>
